@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "257624515398",
+    "project_id": "urbpark-fcm",
+    "storage_bucket": "urbpark-fcm.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:257624515398:android:15f9954bebf1dfdcfbbb47",
+        "android_client_info": {
+          "package_name": "com.example.urb_park_vit"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDXAXYH3BAd87DwYVj1RttbXJ-JeylOs3Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
