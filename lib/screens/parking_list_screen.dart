@@ -3,8 +3,9 @@ import 'package:geolocator/geolocator.dart';
 import '../models/parking_area.dart';
 import '../services/parking_service.dart';
 import '../services/location_service.dart';
+import '../services/user_session.dart'; // ✅ ADD THIS
 import 'parking_details_screen.dart';
-import 'my_bookings_screen.dart'; // ← ADD THIS
+import 'my_bookings_screen.dart';
 
 class ParkingListScreen extends StatefulWidget {
   const ParkingListScreen({super.key});
@@ -124,12 +125,11 @@ class _ParkingListScreenState extends State<ParkingListScreen> {
           ),
         ),
         actions: [
-          // ← ADD THIS: My Bookings Button
+          // ✅ UPDATED: My Bookings with proper session check
           IconButton(
             icon: Stack(
               children: [
                 const Icon(Icons.receipt_long, size: 24),
-                // Optional: Add notification badge
                 Positioned(
                   right: 0,
                   top: 0,
@@ -152,10 +152,36 @@ class _ParkingListScreenState extends State<ParkingListScreen> {
               ],
             ),
             onPressed: () {
+              // ✅ Get real user ID from session
+              final userId = UserSession.getUserId();
+
+              print('🔐 Current userId from session: $userId');
+
+              if (userId == null) {
+                // User not logged in
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Please login to view bookings'),
+                    backgroundColor: const Color(0xFFEF4444),
+                    action: SnackBarAction(
+                      label: 'Login',
+                      textColor: Colors.white,
+                      onPressed: () {
+                        // TODO: Navigate to login screen
+                        // Navigator.pushNamed(context, '/login');
+                      },
+                    ),
+                  ),
+                );
+                return;
+              }
+
+              // Navigate with real user ID
+              print('✅ Navigating to MyBookings with userId: $userId');
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => const MyBookingsScreen(userId: 1), // Use actual userId when auth is ready
+                  builder: (_) => MyBookingsScreen(userId: userId),
                 ),
               );
             },
@@ -385,7 +411,6 @@ class _ParkingListScreenState extends State<ParkingListScreen> {
   }
 }
 
-// ParkingCard widget remains the same...
 class ParkingCard extends StatelessWidget {
   final ParkingArea area;
   final bool showDistance;
@@ -408,12 +433,12 @@ class ParkingCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            const Color(0xFF2A2A30),
-            const Color(0xFF1F1F24),
+            Color(0xFF2A2A30),
+            Color(0xFF1F1F24),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
@@ -451,20 +476,18 @@ class ParkingCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header Row
                 Row(
                   children: [
-                    // Icon
                     Container(
                       width: 56,
                       height: 56,
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
+                        gradient: const LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            const Color(0xFFF5C63B),
-                            const Color(0xFFE6B42E),
+                            Color(0xFFF5C63B),
+                            Color(0xFFE6B42E),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(16),
@@ -487,8 +510,6 @@ class ParkingCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 14),
-
-                    // Name and location
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -536,8 +557,6 @@ class ParkingCard extends StatelessWidget {
                         ],
                       ),
                     ),
-
-                    // Premium badge
                     if (isPremium)
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -545,10 +564,10 @@ class ParkingCard extends StatelessWidget {
                           vertical: 5,
                         ),
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
+                          gradient: const LinearGradient(
                             colors: [
-                              const Color(0xFFFACC15),
-                              const Color(0xFFEAB308),
+                              Color(0xFFFACC15),
+                              Color(0xFFEAB308),
                             ],
                           ),
                           borderRadius: BorderRadius.circular(8),
@@ -575,10 +594,7 @@ class ParkingCard extends StatelessWidget {
                       ),
                   ],
                 ),
-
                 const SizedBox(height: 12),
-
-                // Features
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -590,10 +606,7 @@ class ParkingCard extends StatelessWidget {
                     _featureChip('${area.totalSlots} Slots', Icons.grid_view_rounded, const Color(0xFF8B5CF6)),
                   ],
                 ),
-
                 const SizedBox(height: 16),
-
-                // Bottom row
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -604,54 +617,47 @@ class ParkingCard extends StatelessWidget {
                   child: Row(
                     children: [
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                const Text(
-                                  '₹',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFFF5C63B),
-                                  ),
+                            const Text(
+                              '₹',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFFF5C63B),
+                              ),
+                            ),
+                            Text(
+                              price,
+                              style: const TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFFF5C63B),
+                                height: 1,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Padding(
+                              padding: EdgeInsets.only(bottom: 4),
+                              child: Text(
+                                '/hour',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF8D8D93),
                                 ),
-                                Text(
-                                  price,
-                                  style: const TextStyle(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.w900,
-                                    color: Color(0xFFF5C63B),
-                                    height: 1,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                const Padding(
-                                  padding: EdgeInsets.only(bottom: 4),
-                                  child: Text(
-                                    '/hour',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF8D8D93),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ],
                         ),
                       ),
-
-                      // Button
                       Container(
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
+                          gradient: const LinearGradient(
                             colors: [
-                              const Color(0xFFF5C63B),
-                              const Color(0xFFE6B42E),
+                              Color(0xFFF5C63B),
+                              Color(0xFFE6B42E),
                             ],
                           ),
                           borderRadius: BorderRadius.circular(12),
@@ -675,14 +681,14 @@ class ParkingCard extends StatelessWidget {
                               );
                             },
                             borderRadius: BorderRadius.circular(12),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(
                                 horizontal: 20,
                                 vertical: 14,
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
-                                children: const [
+                                children: [
                                   Text(
                                     'View',
                                     style: TextStyle(

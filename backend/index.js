@@ -1095,7 +1095,7 @@ app.get('/api/bookings/:id/qr-status', async (req, res) => {
       showQR = false;
       qrStatus = 'CANCELLED';
       statusMessage = booking.refundAmount
-        ? `Cancelled - Refund ₹${booking.refundAmount.toFixed(0)} initiated`
+        ? `Cancelled - Refund â‚¹${booking.refundAmount.toFixed(0)} initiated`
         : 'Booking Cancelled';
     } else if (booking.bookingStatus === 'EXPIRED') {
       showQR = false;
@@ -1215,7 +1215,7 @@ app.post('/api/bookings/:id/cancel', async (req, res) => {
       ...cancelledBooking,
       refundPercentage,
       message: refundAmount > 0
-        ? `Booking cancelled. ₹${refundAmount.toFixed(0)} refund initiated.`
+        ? `Booking cancelled. â‚¹${refundAmount.toFixed(0)} refund initiated.`
         : 'Booking cancelled.'
     });
 
@@ -1290,7 +1290,7 @@ app.post('/api/bookings/:id/cancel', async (req, res) => {
 
     if (booking.paymentId && booking.paymentMethod === 'RAZORPAY' && refundAmount > 0) {
       try {
-        console.log('🔄 Processing Razorpay refund...');
+        console.log('ðŸ”„ Processing Razorpay refund...');
         console.log('Payment ID:', booking.paymentId);
         console.log('Refund Amount:', refundAmount);
 
@@ -1304,15 +1304,15 @@ app.post('/api/bookings/:id/cancel', async (req, res) => {
           }
         });
 
-        console.log('✅ Razorpay refund initiated:', razorpayRefund.id);
+        console.log('âœ… Razorpay refund initiated:', razorpayRefund.id);
 
       } catch (error) {
-        console.error('❌ Razorpay refund error:', error.error || error.message);
+        console.error('âŒ Razorpay refund error:', error.error || error.message);
 
-        // ✅ Handle test mode balance error gracefully
+        // âœ… Handle test mode balance error gracefully
         if (error.error && error.error.code === 'BAD_REQUEST_ERROR' &&
             error.error.description.includes('balance')) {
-          console.log('⚠️ Test mode: Insufficient balance. Marking refund as pending.');
+          console.log('âš ï¸ Test mode: Insufficient balance. Marking refund as pending.');
           refundStatus = 'PENDING'; // Mark as pending instead of failing
         } else {
           refundStatus = 'FAILED';
@@ -1339,7 +1339,7 @@ app.post('/api/bookings/:id/cancel', async (req, res) => {
       }
     });
 
-    console.log('✅ Booking cancelled:', updatedBooking.id);
+    console.log('âœ… Booking cancelled:', updatedBooking.id);
 
     res.json({
       message: refundAmount > 0
@@ -1354,7 +1354,7 @@ app.post('/api/bookings/:id/cancel', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error cancelling booking:', error);
+    console.error('âŒ Error cancelling booking:', error);
     res.status(500).json({
       error: 'Failed to cancel booking',
       details: error.message
@@ -1481,7 +1481,7 @@ app.post('/api/bookings/:id/confirm-extension', async (req, res) => {
       currentEnd.getTime() + extraMinutes * 60 * 1000,
     );
 
-    // Update amount (optional – add extra charge)
+    // Update amount (optional â€“ add extra charge)
     const updatedBooking = await prisma.booking.update({
       where: { id: bookingId },
       data: {
@@ -1504,7 +1504,6 @@ app.post('/api/bookings/:id/confirm-extension', async (req, res) => {
     res.status(500).json({ error: 'Failed to confirm extension' });
   }
 });
-
 
 
 // ==================== HEALTH CHECK ====================

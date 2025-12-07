@@ -234,7 +234,7 @@ class _BookingQRWidgetState extends State<BookingQRWidget> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '₹${(_qrData!['refundAmount'] as num).toStringAsFixed(0)}',
+                          'â‚¹${(_qrData!['refundAmount'] as num).toStringAsFixed(0)}',
                           style: const TextStyle(
                             color: Color(0xFF4ADE80),
                             fontSize: 20,

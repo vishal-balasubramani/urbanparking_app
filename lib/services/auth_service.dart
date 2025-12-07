@@ -4,16 +4,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../config/api_config.dart';
+import 'user_session.dart'; // ✅ ADD THIS
 
 class AuthService {
   static const String _tokenKey = 'auth_token';
   static const String _userKey = 'user_data';
 
-  // Fixed: Add serverClientId if you need serverAuthCode
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: <String>['email', 'profile'],
-    // Optional: Only add serverClientId if you need serverAuthCode
-    // serverClientId: 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com',
   );
 
   // Register with email/password
@@ -39,6 +37,15 @@ class AuthService {
       if (response.statusCode == 201) {
         final data = jsonDecode(response.body);
         await _saveAuthData(data['token'], data['user']);
+
+        // ✅ SET USER SESSION
+        UserSession.setUser(
+          userId: data['user']['id'],
+          name: data['user']['name'],
+          email: data['user']['email'],
+          phone: data['user']['phone'],
+        );
+
         return data;
       } else {
         final error = jsonDecode(response.body);
@@ -68,6 +75,15 @@ class AuthService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         await _saveAuthData(data['token'], data['user']);
+
+        // ✅ SET USER SESSION
+        UserSession.setUser(
+          userId: data['user']['id'],
+          name: data['user']['name'],
+          email: data['user']['email'],
+          phone: data['user']['phone'],
+        );
+
         return data;
       } else {
         final error = jsonDecode(response.body);
@@ -78,30 +94,23 @@ class AuthService {
     }
   }
 
-  // Google Sign-In (Fixed for v7.x)
+  // Google Sign-In
   Future<Map<String, dynamic>> signInWithGoogle() async {
     try {
-      // Sign out first to force account picker
       await _googleSignIn.signOut();
-
-      // Trigger Google Sign-In flow
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       if (googleUser == null) {
         throw 'Google sign-in cancelled by user';
       }
 
-      // Get authentication details
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
-      // Debug log
       print('Google Sign-In successful:');
       print('Email: ${googleUser.email}');
       print('Name: ${googleUser.displayName}');
       print('ID: ${googleUser.id}');
-      print('ID Token: ${googleAuth.idToken}');
 
-      // Send to backend (REMOVED serverAuthCode - not needed for basic auth)
       final url = Uri.parse('${ApiConfig.baseUrl}/api/auth/google');
       final response = await http.post(
         url,
@@ -115,12 +124,18 @@ class AuthService {
         }),
       );
 
-      print('Backend response status: ${response.statusCode}');
-      print('Backend response body: ${response.body}');
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         await _saveAuthData(data['token'], data['user']);
+
+        // ✅ SET USER SESSION
+        UserSession.setUser(
+          userId: data['user']['id'],
+          name: data['user']['name'],
+          email: data['user']['email'],
+          phone: data['user']['phone'],
+        );
+
         return data;
       } else {
         final error = jsonDecode(response.body);
@@ -151,11 +166,6 @@ class AuthService {
           ? '${credential.givenName} ${credential.familyName}'
           : null;
 
-      print('Apple Sign-In successful:');
-      print('Email: ${credential.email}');
-      print('Name: $fullName');
-      print('ID: ${credential.userIdentifier}');
-
       final url = Uri.parse('${ApiConfig.baseUrl}/api/auth/apple');
       final response = await http.post(
         url,
@@ -168,12 +178,18 @@ class AuthService {
         }),
       );
 
-      print('Backend response status: ${response.statusCode}');
-      print('Backend response body: ${response.body}');
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         await _saveAuthData(data['token'], data['user']);
+
+        // ✅ SET USER SESSION
+        UserSession.setUser(
+          userId: data['user']['id'],
+          name: data['user']['name'],
+          email: data['user']['email'],
+          phone: data['user']['phone'],
+        );
+
         return data;
       } else {
         final error = jsonDecode(response.body);
@@ -203,6 +219,15 @@ class AuthService {
       if (response.statusCode == 200) {
         final user = jsonDecode(response.body);
         await _saveUserData(user);
+
+        // ✅ SET USER SESSION
+        UserSession.setUser(
+          userId: user['id'],
+          name: user['name'],
+          email: user['email'],
+          phone: user['phone'],
+        );
+
         return user;
       }
       return null;
@@ -237,6 +262,15 @@ class AuthService {
       if (response.statusCode == 200) {
         final user = jsonDecode(response.body);
         await _saveUserData(user);
+
+        // ✅ UPDATE USER SESSION
+        UserSession.setUser(
+          userId: user['id'],
+          name: user['name'],
+          email: user['email'],
+          phone: user['phone'],
+        );
+
         return user;
       } else {
         final error = jsonDecode(response.body);
@@ -293,11 +327,27 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
     await prefs.remove(_userKey);
+
+    // ✅ CLEAR USER SESSION
+    UserSession.clearSession();
   }
 
   // Get user ID
   Future<int?> getUserId() async {
     final user = await getStoredUser();
     return user?['id'];
+  }
+
+  // ✅ Load session from storage (call on app start)
+  Future<void> loadSession() async {
+    final user = await getStoredUser();
+    if (user != null) {
+      UserSession.setUser(
+        userId: user['id'],
+        name: user['name'],
+        email: user['email'],
+        phone: user['phone'],
+      );
+    }
   }
 }

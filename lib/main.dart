@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:urban_parking_app/services/auth_service.dart';
 import 'screens/splash_screen.dart';
 import 'screens/landing_screen.dart';
 import 'screens/auth_screen.dart';
 import 'screens/parking_list_screen.dart';
 
-void main() {
+void main() async{
   WidgetsFlutterBinding.ensureInitialized();
+  final authService = AuthService();
+  await authService.loadSession();
 
   // Set status bar to light content (white icons)
   SystemChrome.setSystemUIOverlayStyle(

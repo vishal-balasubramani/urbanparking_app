@@ -11,7 +11,7 @@ class BookingSuccessScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final qrData = jsonEncode({
-      'bookingId': booking['id'],
+      'bookingId': booking['bookind_id'],
     });
 
     return Scaffold(
@@ -45,13 +45,7 @@ class BookingSuccessScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                'Booking ID: #${booking['booking.id']}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF8D8D93),
-                ),
-              ),
+
               const SizedBox(height: 32),
               Container(
                 padding: const EdgeInsets.all(20),
@@ -67,20 +61,19 @@ class BookingSuccessScreen extends StatelessWidget {
               ),
               const SizedBox(height: 32),
 
-              // ← PRIMARY: View My Bookings Button
+// ← PRIMARY: View My Bookings Button
               SizedBox(
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    // Clear all routes and go to My Bookings
-                    // Assume booking['userId'] contains the correct user id (3 in your DB)
+
                     Navigator.of(context).popUntil((route) => route.isFirst);
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) => MyBookingsScreen(
-                          userId: booking['userId'] as int, // <-- use actual userId
+                          userId: booking['userId'] as int,
                         ),
                       ),
                     );
@@ -106,7 +99,7 @@ class BookingSuccessScreen extends StatelessWidget {
 
               const SizedBox(height: 12),
 
-              // Secondary: Go to Home button
+
               SizedBox(
                 width: double.infinity,
                 height: 56,

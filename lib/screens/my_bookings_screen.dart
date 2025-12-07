@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -126,7 +126,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
   String _formatDateTime(String iso) {
     try {
       final dt = DateTime.parse(iso).toLocal();
-      return DateFormat('EEE, d MMM • hh:mm a').format(dt);
+      return DateFormat('EEE, d MMM  hh:mm a').format(dt);
     } catch (_) {
       return iso;
     }
@@ -327,7 +327,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
 
       if (!mounted) return;
 
-      // ✅ CRITICAL FIX: Reload ALL bookings from backend to get fresh endTime
+      // âœ… CRITICAL FIX: Reload ALL bookings from backend to get fresh endTime
       await _loadBookings();
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -476,14 +476,72 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
     }
   }
 
-  void _navigateToParking(Map<String, dynamic> booking) {
+  Future<void> _navigateToParking(Map<String, dynamic> booking) async {
     final area = booking['slot']['parkingArea'];
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Navigating to ${area['name']}...'),
+    final lat = area['lat'] as double;
+    final lng = area['long'] as double;
+    final name = area['name'] as String;
+
+    final choice = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF18181B),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Navigate to Parking',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.map, color: Color(0xFFFACC15)),
+              title: const Text('View on Map', style: TextStyle(color: Colors.white)),
+              onTap: () => Navigator.pop(context, 'view'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.navigation, color: Color(0xFF38BDF8)),
+              title: const Text('Start Navigation', style: TextStyle(color: Colors.white)),
+              onTap: () => Navigator.pop(context, 'navigate'),
+            ),
+          ],
+        ),
       ),
     );
+
+    if (choice == null) return;
+
+    final Uri googleMapsUrl;
+
+    if (choice == 'navigate') {
+      // Turn-by-turn navigation
+      googleMapsUrl = Uri.parse(
+          'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving'
+      );
+    } else {
+      // View location
+      googleMapsUrl = Uri.parse(
+          'https://www.google.com/maps/search/?api=1&query=$lat,$lng'
+      );
+    }
+
+    try {
+      if (await canLaunchUrl(googleMapsUrl)) {
+        await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication);
+      } else {
+        throw 'Could not open Google Maps';
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error opening maps: $e'),
+          backgroundColor: const Color(0xFFEF4444),
+        ),
+      );
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -817,7 +875,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
                       ),
                     const Spacer(),
                     Text(
-                      '₹${(booking['amount'] as num).toStringAsFixed(0)}',
+                      '₹${(booking['amount'] as num).toInt()}',
                       style: const TextStyle(
                         color: Color(0xFFFACC15),
                         fontSize: 18,
