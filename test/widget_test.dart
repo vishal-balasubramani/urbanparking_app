@@ -7,13 +7,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:urb_park_vit/main.dart';
+import 'package:urban_parking_app/main.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(const UrbParkApp());
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);
